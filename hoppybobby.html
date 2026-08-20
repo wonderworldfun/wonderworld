@@ -1,0 +1,4096 @@
+<!-- ================= CREATIVE ================= -->
+
+<section id="creative" class="screen">
+
+<button class="back" onclick="showScreen('home')">← Home</button>
+
+<h1 class="section-title">🎨 Creative Studio</h1>
+
+<div id="creativeMenu" class="panel">
+
+<div class="game-grid">
+
+<div class="game-card">
+<div class="game-icon">✨</div>
+<h3>AI Drawing</h3>
+<p>Draw something and make it magical!</p>
+<button class="play" onclick="openCreative('ai')">START</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🖍️</div>
+<h3>Coloring</h3>
+<p>Color a cute picture!</p>
+<button class="play" onclick="openCreative('coloring')">START</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🎨</div>
+<h3>Normal Drawing</h3>
+<p>Draw anything you can imagine!</p>
+<button class="play" onclick="openCreative('normal')">START</button>
+</div>
+
+</div>
+
+</div>
+
+
+<div id="creativeWindow" class="hidden panel" style="margin-top:20px">
+
+<div id="creativeContent"></div>
+
+</div>
+
+</section>
+
+
+<script>
+
+/* =========================================================
+   CREATIVE STUDIO
+========================================================= */
+
+let creativeCanvas=null;
+let creativeCtx=null;
+
+let creativeBrush="#ff4f81";
+let creativeDrawing=false;
+let creativeMode="normal";
+
+
+function openCreative(mode){
+
+    creativeMode=mode;
+
+    document.getElementById("creativeMenu")
+        .classList.add("hidden");
+
+    document.getElementById("creativeWindow")
+        .classList.remove("hidden");
+
+    if(mode==="ai"){
+        showAIDrawing();
+    }
+
+    if(mode==="coloring"){
+        showColoring();
+    }
+
+    if(mode==="normal"){
+        showNormalDrawing();
+    }
+
+}
+
+
+function closeCreative(){
+
+    document.getElementById("creativeWindow")
+        .classList.add("hidden");
+
+    document.getElementById("creativeMenu")
+        .classList.remove("hidden");
+
+}
+
+
+/* =========================================================
+   COLOR BUTTONS
+========================================================= */
+
+function creativeColors(){
+
+return `
+
+<div class="colors">
+
+<button class="color"
+style="background:#ff4f81"
+onclick="setCreativeBrush('#ff4f81')"></button>
+
+<button class="color"
+style="background:#ffb347"
+onclick="setCreativeBrush('#ffb347')"></button>
+
+<button class="color"
+style="background:#ffe66d"
+onclick="setCreativeBrush('#ffe66d')"></button>
+
+<button class="color"
+style="background:#55d68b"
+onclick="setCreativeBrush('#55d68b')"></button>
+
+<button class="color"
+style="background:#48bdf8"
+onclick="setCreativeBrush('#48bdf8')"></button>
+
+<button class="color"
+style="background:#8067ff"
+onclick="setCreativeBrush('#8067ff')"></button>
+
+<button class="color"
+style="background:#302744"
+onclick="setCreativeBrush('#302744')"></button>
+
+</div>
+
+`;
+
+}
+
+
+/* =========================================================
+   NORMAL DRAWING
+========================================================= */
+
+function showNormalDrawing(){
+
+document.getElementById("creativeContent").innerHTML=`
+
+<h2 style="text-align:center">🎨 Normal Drawing</h2>
+
+<p style="text-align:center;margin:10px 0 20px">
+Draw anything you want!
+</p>
+
+${creativeColors()}
+
+<canvas id="creativeCanvas"></canvas>
+
+<div class="action-row">
+
+<button class="action"
+onclick="clearCreativeDrawing()">
+🗑️ Clear
+</button>
+
+<button class="action secondary"
+onclick="randomCreativeChallenge()">
+🎯 Challenge
+</button>
+
+<button class="action secondary"
+onclick="closeCreative()">
+← Back
+</button>
+
+</div>
+
+`;
+
+setupCreativeCanvas();
+
+}
+
+
+/* =========================================================
+   AI DRAWING
+========================================================= */
+
+function showAIDrawing(){
+
+document.getElementById("creativeContent").innerHTML=`
+
+<h2 style="text-align:center">✨ AI Drawing</h2>
+
+<p style="text-align:center;margin:10px 0 20px">
+Draw your idea, then let the magic enhance it!
+</p>
+
+${creativeColors()}
+
+<canvas id="creativeCanvas"></canvas>
+
+<div class="action-row">
+
+<button class="action"
+onclick="enhanceCreativeDrawing()">
+✨ Enhance with AI
+</button>
+
+<button class="action secondary"
+onclick="clearCreativeDrawing()">
+🗑️ Clear
+</button>
+
+<button class="action secondary"
+onclick="closeCreative()">
+← Back
+</button>
+
+</div>
+
+<div id="aiMessage"
+style="
+text-align:center;
+font-weight:bold;
+font-size:20px;
+margin-top:15px">
+</div>
+
+`;
+
+setupCreativeCanvas();
+
+}
+
+
+/* =========================================================
+   COLORING
+========================================================= */
+
+function showColoring(){
+
+document.getElementById("creativeContent").innerHTML=`
+
+<h2 style="text-align:center">🖍️ Coloring World</h2>
+
+<p style="text-align:center;margin:10px 0 20px">
+Choose a color and color the picture!
+</p>
+
+${creativeColors()}
+
+<canvas id="creativeCanvas"></canvas>
+
+<div class="action-row">
+
+<button class="action"
+onclick="clearColoring()">
+🗑️ Reset
+</button>
+
+<button class="action secondary"
+onclick="newColoringPicture()">
+🖼️ New Picture
+</button>
+
+<button class="action secondary"
+onclick="closeCreative()">
+← Back
+</button>
+
+</div>
+
+`;
+
+setupCreativeCanvas();
+
+drawColoringPicture();
+
+}
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+function setupCreativeCanvas(){
+
+creativeCanvas=
+document.getElementById("creativeCanvas");
+
+creativeCtx=
+creativeCanvas.getContext("2d");
+
+creativeCanvas.width=
+creativeCanvas.clientWidth;
+
+creativeCanvas.height=
+creativeCanvas.clientHeight;
+
+
+function position(e){
+
+const rect=
+creativeCanvas.getBoundingClientRect();
+
+if(e.touches){
+
+return{
+x:e.touches[0].clientX-rect.left,
+y:e.touches[0].clientY-rect.top
+};
+
+}
+
+return{
+x:e.clientX-rect.left,
+y:e.clientY-rect.top
+};
+
+}
+
+
+function startDrawing(e){
+
+creativeDrawing=true;
+
+const p=position(e);
+
+creativeCtx.beginPath();
+
+creativeCtx.moveTo(p.x,p.y);
+
+}
+
+
+function drawCreative(e){
+
+if(!creativeDrawing)return;
+
+e.preventDefault();
+
+const p=position(e);
+
+creativeCtx.lineWidth=7;
+creativeCtx.lineCap="round";
+creativeCtx.lineJoin="round";
+creativeCtx.strokeStyle=creativeBrush;
+
+creativeCtx.lineTo(p.x,p.y);
+
+creativeCtx.stroke();
+
+}
+
+
+function stopDrawing(){
+
+creativeDrawing=false;
+
+creativeCtx.closePath();
+
+}
+
+
+creativeCanvas.addEventListener(
+"mousedown",
+startDrawing
+);
+
+creativeCanvas.addEventListener(
+"mousemove",
+drawCreative
+);
+
+creativeCanvas.addEventListener(
+"mouseup",
+stopDrawing
+);
+
+creativeCanvas.addEventListener(
+"mouseleave",
+stopDrawing
+);
+
+
+creativeCanvas.addEventListener(
+"touchstart",
+startDrawing
+);
+
+creativeCanvas.addEventListener(
+"touchmove",
+drawCreative
+);
+
+creativeCanvas.addEventListener(
+"touchend",
+stopDrawing
+);
+
+}
+
+
+/* =========================================================
+   BRUSH
+========================================================= */
+
+function setCreativeBrush(color){
+
+creativeBrush=color;
+
+}
+
+
+/* =========================================================
+   CLEAR DRAWING
+========================================================= */
+
+function clearCreativeDrawing(){
+
+if(!creativeCanvas)return;
+
+creativeCtx.clearRect(
+0,
+0,
+creativeCanvas.width,
+creativeCanvas.height
+);
+
+}
+
+
+/* =========================================================
+   AI ENHANCEMENT
+========================================================= */
+
+function enhanceCreativeDrawing(){
+
+if(!creativeCanvas)return;
+
+const message=
+document.getElementById("aiMessage");
+
+message.textContent=
+"✨ AI is enhancing your drawing...";
+
+setTimeout(()=>{
+
+const oldCanvas=
+document.createElement("canvas");
+
+oldCanvas.width=
+creativeCanvas.width;
+
+oldCanvas.height=
+creativeCanvas.height;
+
+const oldCtx=
+oldCanvas.getContext("2d");
+
+oldCtx.drawImage(
+creativeCanvas,
+0,
+0
+);
+
+
+creativeCtx.clearRect(
+0,
+0,
+creativeCanvas.width,
+creativeCanvas.height
+);
+
+
+/*
+   Enhanced visual effect.
+   This does not upload or access the user's computer.
+*/
+
+creativeCtx.shadowColor="#8067ff";
+creativeCtx.shadowBlur=4;
+
+creativeCtx.drawImage(
+oldCanvas,
+0,
+0
+);
+
+creativeCtx.shadowBlur=0;
+
+
+/* magical sparkles */
+
+for(let i=0;i<30;i++){
+
+const x=
+Math.random()*creativeCanvas.width;
+
+const y=
+Math.random()*creativeCanvas.height;
+
+const colors=[
+"#ff5fa2",
+"#8067ff",
+"#48bdf8",
+"#ffd95a",
+"#55d68b"
+];
+
+creativeCtx.fillStyle=
+colors[
+Math.floor(Math.random()*colors.length)
+];
+
+creativeCtx.beginPath();
+
+creativeCtx.arc(
+x,
+y,
+Math.random()*3+1,
+0,
+Math.PI*2
+);
+
+creativeCtx.fill();
+
+}
+
+
+message.textContent=
+"✨ Your drawing has been enhanced!";
+
+showToast(
+"✨ AI enhancement complete!"
+);
+
+},1500);
+
+}
+
+
+/* =========================================================
+   COLORING PICTURE
+========================================================= */
+
+function drawColoringPicture(){
+
+if(!creativeCanvas)return;
+
+const w=creativeCanvas.width;
+const h=creativeCanvas.height;
+
+creativeCtx.lineWidth=7;
+creativeCtx.strokeStyle="#302744";
+creativeCtx.lineCap="round";
+creativeCtx.lineJoin="round";
+
+
+/* SUN */
+
+creativeCtx.beginPath();
+
+creativeCtx.arc(
+w*.2,
+h*.25,
+45,
+0,
+Math.PI*2
+);
+
+creativeCtx.stroke();
+
+
+for(let i=0;i<12;i++){
+
+const angle=
+i*Math.PI/6;
+
+creativeCtx.beginPath();
+
+creativeCtx.moveTo(
+w*.2+
+Math.cos(angle)*60,
+h*.25+
+Math.sin(angle)*60
+);
+
+creativeCtx.lineTo(
+w*.2+
+Math.cos(angle)*80,
+h*.25+
+Math.sin(angle)*80
+);
+
+creativeCtx.stroke();
+
+}
+
+
+/* CLOUD */
+
+creativeCtx.beginPath();
+
+creativeCtx.arc(
+w*.68,
+h*.25,
+35,
+0,
+Math.PI*2
+);
+
+creativeCtx.arc(
+w*.76,
+h*.25,
+45,
+0,
+Math.PI*2
+);
+
+creativeCtx.arc(
+w*.84,
+h*.28,
+32,
+0,
+Math.PI*2
+);
+
+creativeCtx.moveTo(
+w*.63,
+h*.32
+);
+
+creativeCtx.lineTo(
+w*.89,
+h*.32
+);
+
+creativeCtx.stroke();
+
+
+/* FLOWER */
+
+const flowerX=w*.5;
+const flowerY=h*.65;
+
+creativeCtx.beginPath();
+
+creativeCtx.moveTo(
+flowerX,
+flowerY+25
+);
+
+creativeCtx.lineTo(
+flowerX,
+h*.9
+);
+
+creativeCtx.stroke();
+
+
+for(let i=0;i<6;i++){
+
+const angle=
+i*Math.PI/3;
+
+creativeCtx.beginPath();
+
+creativeCtx.arc(
+flowerX+
+Math.cos(angle)*28,
+flowerY+
+Math.sin(angle)*28,
+20,
+0,
+Math.PI*2
+);
+
+creativeCtx.stroke();
+
+}
+
+creativeCtx.beginPath();
+
+creativeCtx.arc(
+flowerX,
+flowerY,
+18,
+0,
+Math.PI*2
+);
+
+creativeCtx.stroke();
+
+
+/* GRASS */
+
+creativeCtx.beginPath();
+
+creativeCtx.moveTo(
+0,
+h*.9
+);
+
+creativeCtx.quadraticCurveTo(
+w*.25,
+h*.84,
+w*.5,
+h*.9
+);
+
+creativeCtx.quadraticCurveTo(
+w*.75,
+h*.84,
+w,
+h*.9
+);
+
+creativeCtx.stroke();
+
+}
+
+
+/* =========================================================
+   COLORING RESET
+========================================================= */
+
+function clearColoring(){
+
+creativeCtx.clearRect(
+0,
+0,
+creativeCanvas.width,
+creativeCanvas.height
+);
+
+drawColoringPicture();
+
+}
+
+
+/* =========================================================
+   NEW COLORING PICTURE
+========================================================= */
+
+function newColoringPicture(){
+
+creativeCtx.clearRect(
+0,
+0,
+creativeCanvas.width,
+creativeCanvas.height
+);
+
+drawColoringPicture();
+
+}
+
+
+/* =========================================================
+   DRAWING CHALLENGES
+========================================================= */
+
+function randomCreativeChallenge(){
+
+const challenges=[
+
+"🐱 Draw a cute cat!",
+"🏰 Draw a magical castle!",
+"🚀 Draw a spaceship!",
+"🐉 Draw a friendly dragon!",
+"🍕 Draw the world's biggest pizza!",
+"🌈 Draw a rainbow world!",
+"👽 Draw a funny alien!",
+"🦄 Draw a unicorn!",
+"🐸 Draw a happy frog!",
+"🌳 Draw a magical tree!",
+"🐳 Draw a giant whale!",
+"🦋 Draw a beautiful butterfly!"
+
+];
+
+showToast(
+"🎯 Challenge: "+
+challenges[
+Math.floor(
+Math.random()*challenges.length
+)
+]
+);
+
+}
+
+</script>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>✨ WonderWorld ✨</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+:root{
+    --pink:#ff5fa2;
+    --purple:#8067ff;
+    --blue:#48bdf8;
+    --yellow:#ffd95a;
+    --green:#55d68b;
+    --dark:#302744;
+    --white:#fff;
+}
+
+body{
+    min-height:100vh;
+    font-family:"Trebuchet MS","Comic Sans MS",sans-serif;
+    color:var(--dark);
+    background:
+        radial-gradient(circle at 10% 20%,#ffffffaa 0 3px,transparent 4px),
+        radial-gradient(circle at 80% 30%,#ffffffaa 0 4px,transparent 5px),
+        linear-gradient(135deg,#ffd8eb,#d9ddff,#d8f8ff);
+    background-size:auto,auto,cover;
+    overflow-x:hidden;
+}
+
+button{
+    font:inherit;
+    border:0;
+    cursor:pointer;
+}
+
+.hidden{
+    display:none!important;
+}
+
+header{
+    padding:28px 15px 10px;
+    text-align:center;
+}
+
+.logo{
+    font-size:clamp(40px,8vw,76px);
+    font-weight:900;
+    color:var(--pink);
+    text-shadow:
+        4px 4px #fff,
+        7px 7px #8067ff33;
+}
+
+.subtitle{
+    font-size:18px;
+    margin-top:5px;
+    opacity:.8;
+}
+
+.screen{
+    display:none;
+    max-width:1200px;
+    margin:auto;
+    padding:20px;
+    animation:screenIn .35s ease;
+}
+
+.screen.active{
+    display:block;
+}
+
+@keyframes screenIn{
+    from{opacity:0;transform:translateY(15px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+.back{
+    background:#fff;
+    color:var(--dark);
+    border-radius:18px;
+    padding:11px 18px;
+    box-shadow:0 5px 15px #0002;
+    margin-bottom:20px;
+    transition:.2s;
+}
+
+.back:hover{
+    transform:translateY(-2px);
+}
+
+.section-title{
+    text-align:center;
+    font-size:clamp(32px,6vw,52px);
+    color:var(--purple);
+    margin-bottom:25px;
+}
+
+/* HOME */
+
+.home-grid{
+    max-width:1000px;
+    margin:30px auto;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:25px;
+}
+
+.home-card{
+    position:relative;
+    min-height:210px;
+    border-radius:38px;
+    padding:25px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    overflow:hidden;
+    box-shadow:0 12px 0 #00000018,0 20px 35px #0002;
+    transition:.25s;
+}
+
+.home-card:hover{
+    transform:translateY(-8px) rotate(.5deg);
+    box-shadow:0 18px 0 #00000018,0 25px 40px #0002;
+}
+
+.home-card:before{
+    content:"";
+    position:absolute;
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    background:#ffffff25;
+    top:-60px;
+    right:-40px;
+}
+
+.home-card .icon{
+    font-size:70px;
+    z-index:1;
+}
+
+.home-card h2{
+    font-size:32px;
+    z-index:1;
+}
+
+.home-card p{
+    margin-top:8px;
+    z-index:1;
+}
+
+.games{
+    background:linear-gradient(135deg,#ff77b5,#ff4f78);
+}
+
+.riddles{
+    background:linear-gradient(135deg,#927cff,#6152dc);
+}
+
+.pranks{
+    background:linear-gradient(135deg,#ffbd58,#ff714e);
+}
+
+.creative{
+    background:linear-gradient(135deg,#40dba3,#28aee7);
+}
+
+.panel{
+    background:#ffffffd9;
+    backdrop-filter:blur(10px);
+    border:2px solid #fff;
+    border-radius:32px;
+    padding:28px;
+    box-shadow:0 12px 35px #0002;
+}
+
+/* GAMES */
+
+.game-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.game-card{
+    background:#fff;
+    border-radius:28px;
+    padding:24px;
+    text-align:center;
+    box-shadow:0 8px 20px #0002;
+    transition:.2s;
+}
+
+.game-card:hover{
+    transform:translateY(-5px);
+}
+
+.game-icon{
+    font-size:65px;
+}
+
+.game-card h3{
+    font-size:22px;
+    margin:8px 0;
+}
+
+.play{
+    margin-top:12px;
+    background:var(--pink);
+    color:white;
+    padding:12px 22px;
+    border-radius:18px;
+    font-weight:bold;
+}
+
+.play:hover{
+    filter:brightness(1.08);
+}
+
+.game-window{
+    margin-top:25px;
+    text-align:center;
+}
+
+.scorebar{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    flex-wrap:wrap;
+    margin:15px;
+}
+
+.stat{
+    background:#fff;
+    border-radius:15px;
+    padding:9px 15px;
+    box-shadow:0 3px 10px #0001;
+}
+
+.catch-area{
+    position:relative;
+    height:390px;
+    background:linear-gradient(#bcecff,#effcff);
+    border-radius:28px;
+    overflow:hidden;
+    border:4px solid #fff;
+}
+
+.catch-target{
+    position:absolute;
+    font-size:48px;
+    user-select:none;
+    animation:bounce .4s;
+}
+
+@keyframes bounce{
+    0%{transform:scale(.5)}
+    70%{transform:scale(1.2)}
+    100%{transform:scale(1)}
+}
+
+.memory-grid{
+    display:grid;
+    grid-template-columns:repeat(4,80px);
+    justify-content:center;
+    gap:10px;
+}
+
+.memory-card{
+    height:80px;
+    border-radius:18px;
+    background:var(--purple);
+    color:transparent;
+    font-size:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.memory-card.open{
+    background:white;
+    color:initial;
+}
+
+.ttt{
+    display:grid;
+    grid-template-columns:repeat(3,90px);
+    justify-content:center;
+    gap:8px;
+}
+
+.ttt button{
+    width:90px;
+    height:90px;
+    border-radius:20px;
+    background:#fff;
+    box-shadow:0 4px 10px #0002;
+    font-size:42px;
+}
+
+.reaction{
+    height:260px;
+    border-radius:30px;
+    background:#ff657e;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:28px;
+    font-weight:bold;
+}
+
+/* NEW GAME STYLES */
+
+.whack-area{
+    position:relative;
+    max-width:600px;
+    height:360px;
+    margin:20px auto;
+    background:#8bdc8b;
+    border:5px solid white;
+    border-radius:30px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+    padding:25px;
+}
+
+.hole{
+    background:#54362c;
+    border-radius:50%;
+    position:relative;
+    overflow:hidden;
+}
+
+.mole{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:55px;
+    cursor:pointer;
+    animation:bounce .2s;
+}
+
+.bubble-area{
+    min-height:390px;
+    background:linear-gradient(#b9efff,#e8fbff);
+    border-radius:28px;
+    position:relative;
+    overflow:hidden;
+    border:4px solid white;
+}
+
+.bubble{
+    position:absolute;
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    background:radial-gradient(circle at 30% 25%,#fff,#72dfff);
+    box-shadow:inset -8px -8px 15px #48bdf855;
+    cursor:pointer;
+    animation:floatBubble 3s linear;
+}
+
+@keyframes floatBubble{
+    from{transform:translateY(80px)}
+    to{transform:translateY(-450px)}
+}
+
+.space-area{
+    position:relative;
+    height:400px;
+    max-width:700px;
+    margin:auto;
+    background:linear-gradient(#090b35,#171d61);
+    border-radius:30px;
+    overflow:hidden;
+    border:4px solid white;
+}
+
+.star{
+    position:absolute;
+    color:white;
+    animation:starMove 2s linear infinite;
+}
+
+@keyframes starMove{
+    from{transform:translateY(-30px)}
+    to{transform:translateY(430px)}
+}
+
+.player{
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:55px;
+}
+
+.asteroid{
+    position:absolute;
+    font-size:42px;
+    cursor:pointer;
+}
+
+.math-question{
+    font-size:55px;
+    font-weight:bold;
+    margin:30px;
+    color:var(--purple);
+}
+
+.cake-area{
+    position:relative;
+    height:390px;
+    border-radius:28px;
+    background:linear-gradient(#fff0c9,#fff);
+    overflow:hidden;
+    border:4px solid white;
+}
+
+.cake-item{
+    position:absolute;
+    font-size:50px;
+    cursor:pointer;
+}
+
+/* RIDDLES */
+
+.riddle-box{
+    max-width:850px;
+    margin:auto;
+    text-align:center;
+}
+
+.riddle-number{
+    color:#8067ff;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.riddle-text{
+    background:#fff;
+    padding:35px;
+    border-radius:30px;
+    font-size:clamp(22px,4vw,34px);
+    line-height:1.45;
+    box-shadow:0 8px 20px #0001;
+    min-height:150px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.riddle-answer{
+    margin-top:18px;
+    background:#e7dcff;
+    padding:20px;
+    border-radius:22px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.action-row{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:20px;
+}
+
+.action{
+    padding:13px 20px;
+    border-radius:17px;
+    color:#fff;
+    background:var(--pink);
+    font-weight:bold;
+}
+
+.action.secondary{
+    background:var(--purple);
+}
+
+/* PRANKS */
+
+.prank-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+}
+
+.prank{
+    background:white;
+    border-radius:28px;
+    padding:22px;
+    text-align:center;
+    box-shadow:0 7px 18px #0002;
+    transition:.2s;
+}
+
+.prank:hover{
+    transform:translateY(-5px);
+}
+
+.prank-icon{
+    font-size:55px;
+}
+
+.prank h3{
+    margin:8px 0;
+    font-size:21px;
+}
+
+.prank button{
+    margin-top:12px;
+    padding:11px 18px;
+    color:white;
+    background:#ff704f;
+    border-radius:16px;
+    font-weight:bold;
+}
+
+/* HACK LINK */
+
+.hack-link-screen{
+    position:fixed;
+    inset:0;
+    background:#10121c;
+    z-index:5000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.hack-link-screen.active{
+    display:flex;
+}
+
+.browser{
+    width:min(850px,100%);
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 20px 70px #0008;
+}
+
+.browser-top{
+    background:#e9e9ed;
+    padding:12px;
+}
+
+.browser-buttons{
+    display:flex;
+    gap:7px;
+    margin-bottom:10px;
+}
+
+.browser-buttons span{
+    width:13px;
+    height:13px;
+    border-radius:50%;
+}
+
+.red{background:#ff5f57}
+.yellow{background:#ffbd2e}
+.green{background:#28c840}
+
+.address{
+    background:#fff;
+    border-radius:10px;
+    padding:12px;
+    color:#555;
+    font-family:monospace;
+    overflow:hidden;
+}
+
+.fake-page{
+    padding:50px 25px;
+    text-align:center;
+}
+
+.fake-page h1{
+    font-size:clamp(28px,6vw,55px);
+    color:#ff4f78;
+}
+
+.fake-url{
+    margin:25px auto;
+    display:block;
+    max-width:550px;
+    background:#111827;
+    color:#69ff9c;
+    padding:18px;
+    border-radius:12px;
+    font-family:monospace;
+    text-decoration:underline;
+    cursor:pointer;
+    word-break:break-all;
+}
+
+.fake-page small{
+    color:#777;
+}
+
+/* FAKE HACK */
+
+.hack-screen{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    background:#020503;
+    color:#00ff48;
+    display:none;
+    font-family:monospace;
+    padding:25px;
+    overflow:hidden;
+}
+
+.hack-screen.active{
+    display:block;
+}
+
+.hack-warning{
+    color:#ff3030;
+    text-align:center;
+    font-size:clamp(32px,7vw,70px);
+    font-weight:bold;
+    animation:warning .45s infinite;
+    margin:15px 0 30px;
+}
+
+@keyframes warning{
+    50%{opacity:.15}
+}
+
+.terminal{
+    max-width:1000px;
+    margin:auto;
+    font-size:clamp(13px,2vw,19px);
+    line-height:1.8;
+}
+
+.progress-wrap{
+    border:2px solid #00ff48;
+    height:30px;
+    margin:30px auto;
+    max-width:800px;
+}
+
+.progress-fill{
+    width:0;
+    height:100%;
+    background:#00ff48;
+    animation:progress 8s linear forwards;
+}
+
+@keyframes progress{
+    to{width:100%}
+}
+
+.fake-final{
+    text-align:center;
+    color:white;
+    font-family:"Trebuchet MS",sans-serif;
+    font-size:25px;
+    margin-top:25px;
+}
+
+/* CREATIVE */
+
+canvas{
+    display:block;
+    width:100%;
+    height:450px;
+    background:white;
+    border-radius:25px;
+    border:5px solid #b8aaff;
+    touch-action:none;
+}
+
+.colors{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:15px;
+    flex-wrap:wrap;
+}
+
+.color{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:3px solid white;
+    box-shadow:0 2px 8px #0003;
+}
+
+/* POPUP */
+
+.toast{
+    position:fixed;
+    left:50%;
+    bottom:25px;
+    transform:translate(-50%,30px);
+    background:#302744;
+    color:white;
+    padding:15px 22px;
+    border-radius:18px;
+    opacity:0;
+    pointer-events:none;
+    transition:.3s;
+    z-index:11000;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+}
+
+/* PERSISTENT MODES */
+
+body.frog-mode{
+    filter:hue-rotate(80deg);
+}
+
+body.rainbow-mode{
+    animation:rainbowForever 4s linear infinite;
+}
+
+@keyframes rainbowForever{
+    0%{filter:hue-rotate(0deg)}
+    25%{filter:hue-rotate(90deg)}
+    50%{filter:hue-rotate(180deg)}
+    75%{filter:hue-rotate(270deg)}
+    100%{filter:hue-rotate(360deg)}
+}
+
+body.crazy-mode{
+    animation:crazyForever .18s infinite;
+}
+
+@keyframes crazyForever{
+    0%{transform:rotate(-.4deg)}
+    50%{transform:rotate(.4deg)}
+    100%{transform:rotate(-.4deg)}
+}
+
+/* PRANK EFFECTS */
+
+body.glitch-mode{
+    animation:glitchPage .15s infinite;
+}
+
+@keyframes glitchPage{
+    0%{transform:translate(0)}
+    25%{transform:translate(3px,-2px)}
+    50%{transform:translate(-3px,2px)}
+    75%{transform:translate(2px,2px)}
+    100%{transform:translate(0)}
+}
+
+.cursor-prank{
+    cursor:none!important;
+}
+
+.fake-update{
+    position:fixed;
+    inset:0;
+    background:#101827;
+    color:white;
+    z-index:12000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:25px;
+}
+
+.update-box{
+    width:min(650px,100%);
+}
+
+.update-circle{
+    width:100px;
+    height:100px;
+    border:9px solid #344155;
+    border-top-color:#48bdf8;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+    margin:0 auto 25px;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg)}
+}
+
+/* MOBILE */
+
+@media(max-width:650px){
+
+    .home-grid{
+        grid-template-columns:1fr;
+    }
+
+    .home-card{
+        min-height:160px;
+    }
+
+    .memory-grid{
+        grid-template-columns:repeat(4,65px);
+    }
+
+    .memory-card{
+        height:65px;
+    }
+
+    .ttt{
+        grid-template-columns:repeat(3,75px);
+    }
+
+    .ttt button{
+        width:75px;
+        height:75px;
+    }
+
+    canvas{
+        height:350px;
+    }
+
+    .whack-area{
+        height:320px;
+        padding:15px;
+        gap:10px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">✨ WonderWorld ✨</div>
+    <div class="subtitle">A place for games, riddles, laughs & creativity!</div>
+</header>
+
+<!-- HOME -->
+
+<section id="home" class="screen active">
+
+<div class="home-grid">
+
+    <button class="home-card games" onclick="showScreen('games')">
+        <div class="icon">🎮</div>
+        <h2>Games</h2>
+        <p>Play cute mini-games!</p>
+    </button>
+
+    <button class="home-card riddles" onclick="showScreen('riddles')">
+        <div class="icon">🧩</div>
+        <h2>Riddles</h2>
+        <p>Can you solve them?</p>
+    </button>
+
+    <button class="home-card pranks" onclick="showScreen('pranks')">
+        <div class="icon">😂</div>
+        <h2>Pranks</h2>
+        <p>Harmless tricks & surprises!</p>
+    </button>
+
+    <button class="home-card creative" onclick="showScreen('creative')">
+        <div class="icon">🎨</div>
+        <h2>Creative</h2>
+        <p>Draw and create!</p>
+    </button>
+
+</div>
+
+</section>
+
+<!-- GAMES -->
+
+<section id="games" class="screen">
+
+<button class="back" onclick="showScreen('home')">← Home</button>
+
+<h1 class="section-title">🎮 Game Arcade</h1>
+
+<div id="gameMenu" class="game-grid">
+
+<div class="game-card">
+<div class="game-icon">🍓</div>
+<h3>Catch the Fruit</h3>
+<p>Catch as much fruit as you can!</p>
+<button class="play" onclick="openGame('catch')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🧠</div>
+<h3>Memory Match</h3>
+<p>Find all the matching pairs.</p>
+<button class="play" onclick="openGame('memory')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">⭕</div>
+<h3>Tic-Tac-Toe</h3>
+<p>Beat the computer!</p>
+<button class="play" onclick="openGame('ttt')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">⚡</div>
+<h3>Reaction Rush</h3>
+<p>How fast can you react?</p>
+<button class="play" onclick="openGame('reaction')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🔢</div>
+<h3>Number Hunt</h3>
+<p>Find the secret number.</p>
+<button class="play" onclick="openGame('number')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🎲</div>
+<h3>Lucky Dice</h3>
+<p>Test your luck!</p>
+<button class="play" onclick="openGame('dice')">PLAY</button>
+</div>
+
+<!-- NEW GAMES -->
+
+<div class="game-card">
+<div class="game-icon">🐹</div>
+<h3>Whack-a-Mole</h3>
+<p>Catch the mole before it disappears!</p>
+<button class="play" onclick="openGame('mole')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🫧</div>
+<h3>Bubble Pop</h3>
+<p>Pop as many bubbles as possible!</p>
+<button class="play" onclick="openGame('bubble')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🐸</div>
+<h3>Frog Jump</h3>
+<p>Help the frog jump to the stars!</p>
+<button class="play" onclick="openGame('frogjump')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🪐</div>
+<h3>Space Dodge</h3>
+<p>Dodge the falling asteroids!</p>
+<button class="play" onclick="openGame('space')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🧁</div>
+<h3>Cake Catch</h3>
+<p>Catch the falling treats!</p>
+<button class="play" onclick="openGame('cake')">PLAY</button>
+</div>
+
+<div class="game-card">
+<div class="game-icon">🧠</div>
+<h3>Quick Math</h3>
+<p>How many answers can you get right?</p>
+<button class="play" onclick="openGame('math')">PLAY</button>
+</div>
+
+</div>
+
+<div id="gameWindow" class="game-window hidden panel"></div>
+
+</section>
+
+<!-- RIDDLES -->
+
+<section id="riddles" class="screen">
+
+<button class="back" onclick="showScreen('home')">← Home</button>
+
+<h1 class="section-title">🧩 Riddle World</h1>
+
+<div class="panel riddle-box">
+
+<div id="riddleCount" class="riddle-number"></div>
+
+<div id="riddleText" class="riddle-text"></div>
+
+<div id="riddleAnswer" class="riddle-answer hidden"></div>
+
+<div class="action-row">
+<button class="action" onclick="revealRiddle()">👀 Reveal Answer</button>
+<button class="action secondary" onclick="nextRiddle()">✨ Next Riddle</button>
+</div>
+
+</div>
+
+</section>
+
+<!-- PRANKS -->
+
+<section id="pranks" class="screen">
+
+<button class="back" onclick="showScreen('home')">← Home</button>
+
+<h1 class="section-title">😂 Prank Laboratory</h1>
+
+<div class="panel" style="margin-bottom:20px;text-align:center">
+    <b>⚠️ All pranks are harmless simulations.</b>
+    <br>
+    Nothing is actually hacked, damaged, deleted, or changed.
+</div>
+
+<div class="prank-grid">
+
+<!-- HACKED - UNCHANGED -->
+
+<div class="prank">
+<div class="prank-icon">💻</div>
+<h3>HACKED</h3>
+<p>A fake suspicious link leads to a dramatic fake hack screen.</p>
+<button onclick="showFakeLink()">OPEN</button>
+</div>
+
+<!-- NEW PRANKS -->
+
+<div class="prank">
+<div class="prank-icon">🔄</div>
+<h3>Fake Update</h3>
+<p>Make it look like the computer suddenly needs a mysterious update.</p>
+<button onclick="fakeUpdate()">TRY</button>
+</div>
+
+<div class="prank">
+<div class="prank-icon">⏳</div>
+<h3>Infinite Loading</h3>
+<p>A loading screen that seems like it will never finish.</p>
+<button onclick="infiniteLoading()">TRY</button>
+</div>
+
+<div class="prank">
+<div class="prank-icon">🖥️</div>
+<h3>Screen Glitch</h3>
+<p>Make the whole page look like it is having a tiny glitch.</p>
+<button onclick="screenGlitch()">TRY</button>
+</div>
+
+<!-- FROG - KEEP -->
+
+<div class="prank">
+<div class="prank-icon">🐸</div>
+<h3>Frog Mode</h3>
+<p>Activate the mysterious frog mode.</p>
+<button onclick="frogMode()">TRY</button>
+</div>
+
+<!-- RAINBOW - KEEP -->
+
+<div class="prank">
+<div class="prank-icon">🌈</div>
+<h3>Rainbow Vision</h3>
+<p>The website becomes extremely colorful.</p>
+<button onclick="rainbowMode()">TRY</button>
+</div>
+
+<!-- SCARY - KEEP -->
+
+<div class="prank">
+<div class="prank-icon">😱</div>
+<h3>Scary Warning</h3>
+<p>A very serious message...</p>
+<button onclick="scaryWarning()">TRY</button>
+</div>
+
+<!-- CRAZY - KEEP -->
+
+<div class="prank">
+<div class="prank-icon">🤪</div>
+<h3>Crazy Mode</h3>
+<p>Everything gets a little silly.</p>
+<button onclick="crazyMode()">TRY</button>
+</div>
+
+<div class="prank">
+<div class="prank-icon">🕵️</div>
+<h3>Secret Scanner</h3>
+<p>Scan the mysterious system for something unusual.</p>
+<button onclick="secretScanner()">TRY</button>
+</div>
+
+<div class="prank">
+<div class="prank-icon">🖱️</div>
+<h3>Magic Cursor</h3>
+<p>Your cursor has mysteriously disappeared!</p>
+<button onclick="magicCursor()">TRY</button>
+</div>
+
+</div>
+
+</section>
+
+<!-- CREATIVE -->
+
+<section id="creative" class="screen">
+
+<button class="back" onclick="showScreen('home')">← Home</button>
+
+<h1 class="section-title">🎨 Creative Studio</h1>
+
+<div class="panel">
+
+<div class="colors">
+
+<button class="color" style="background:#ff4f81"
+onclick="setBrush('#ff4f81')"></button>
+
+<button class="color" style="background:#ffb347"
+onclick="setBrush('#ffb347')"></button>
+
+<button class="color" style="background:#ffe66d"
+onclick="setBrush('#ffe66d')"></button>
+
+<button class="color" style="background:#55d68b"
+onclick="setBrush('#55d68b')"></button>
+
+<button class="color" style="background:#48bdf8"
+onclick="setBrush('#48bdf8')"></button>
+
+<button class="color" style="background:#8067ff"
+onclick="setBrush('#8067ff')"></button>
+
+<button class="color" style="background:#302744"
+onclick="setBrush('#302744')"></button>
+
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div class="action-row">
+<button class="action" onclick="clearDrawing()">🗑️ Clear</button>
+<button class="action secondary" onclick="randomDrawingChallenge()">🎯 Challenge</button>
+</div>
+
+</div>
+
+</section>
+
+<!-- FAKE LINK -->
+
+<div id="fakeLinkScreen" class="hack-link-screen">
+
+<div class="browser">
+
+<div class="browser-top">
+
+<div class="browser-buttons">
+<span class="red"></span>
+<span class="yellow"></span>
+<span class="green"></span>
+</div>
+
+<div class="address">
+https://totally-normal-site.example/check-your-computer
+</div>
+
+</div>
+
+<div class="fake-page">
+
+<h1>⚠️ SYSTEM CHECK</h1>
+
+<p style="margin-top:15px;font-size:18px">
+Your browser has detected something unusual.
+</p>
+
+<a class="fake-url" onclick="startFakeHack()">
+https://secure-system-check.example/CLICK-ME
+</a>
+
+<small>
+Click the link above to continue the "system check".
+</small>
+
+<br><br>
+
+<button class="back" onclick="closeFakeLink">
+Cancel
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- HACK SCREEN -->
+
+<div id="hackScreen" class="hack-screen">
+
+<div class="hack-warning">
+⚠ SYSTEM COMPROMISED ⚠
+</div>
+
+<div class="terminal" id="terminal"></div>
+
+<div class="progress-wrap">
+<div class="progress-fill"></div>
+</div>
+
+<div class="fake-final">
+<span id="hackCountdown">10</span> seconds remaining...
+</div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+/* =========================================================
+   SCREEN SYSTEM
+========================================================= */
+
+function showScreen(id){
+
+    document.querySelectorAll(".screen").forEach(s=>{
+        s.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+}
+
+
+/* =========================================================
+   GAME SYSTEM
+========================================================= */
+
+const gameMenu=document.getElementById("gameMenu");
+const gameWindow=document.getElementById("gameWindow");
+
+function openGame(type){
+
+    gameMenu.classList.add("hidden");
+    gameWindow.classList.remove("hidden");
+
+    if(type==="catch") catchGame();
+    if(type==="memory") memoryGame();
+    if(type==="ttt") ticTacToe();
+    if(type==="reaction") reactionGame();
+    if(type==="number") numberGame();
+    if(type==="dice") diceGame();
+
+    if(type==="mole") moleGame();
+    if(type==="bubble") bubbleGame();
+    if(type==="frogjump") frogJumpGame();
+    if(type==="space") spaceGame();
+    if(type==="cake") cakeGame();
+    if(type==="math") mathGame();
+}
+
+function closeGame(){
+
+    gameWindow.classList.add("hidden");
+    gameMenu.classList.remove("hidden");
+
+}
+
+
+/* ---------- ORIGINAL CATCH ---------- */
+
+function catchGame(){
+
+let score=0;
+let time=20;
+let timer;
+
+gameWindow.innerHTML=`
+
+<h2>🍓 Catch the Fruit!</h2>
+
+<div class="scorebar">
+<div class="stat">⭐ Score: <b id="catchScore">0</b></div>
+<div class="stat">⏱️ Time: <b id="catchTime">20</b></div>
+</div>
+
+<div class="catch-area" id="catchArea"></div>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+const area=document.getElementById("catchArea");
+
+function spawn(){
+
+const fruit=document.createElement("div");
+
+fruit.className="catch-target";
+
+const fruits=["🍓","🍎","🍉","🍒","🍊","🍋","🍇","🥝"];
+
+fruit.textContent=
+fruits[Math.floor(Math.random()*fruits.length)];
+
+fruit.style.left=Math.random()*85+"%";
+fruit.style.top=Math.random()*80+"%";
+
+fruit.onclick=()=>{
+
+score++;
+
+document.getElementById("catchScore").textContent=score;
+
+fruit.remove();
+
+spawn();
+
+};
+
+area.appendChild(fruit);
+}
+
+for(let i=0;i<5;i++) spawn();
+
+timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("catchTime").textContent=time;
+
+if(time<=0){
+
+clearInterval(timer);
+
+area.innerHTML=`
+<div style="
+height:100%;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column">
+<div style="font-size:70px">🏆</div>
+<h2>Time's up!</h2>
+<h2>You caught ${score} fruits!</h2>
+</div>`;
+
+}
+
+},1000);
+
+}
+
+
+/* ---------- ORIGINAL MEMORY ---------- */
+
+function memoryGame(){
+
+const symbols=["🐱","🐶","🐸","🦊","🐼","🐵"];
+
+let cards=[...symbols,...symbols].sort(()=>Math.random()-.5);
+
+let first=null;
+let locked=false;
+let matches=0;
+
+gameWindow.innerHTML=`
+
+<h2>🧠 Memory Match</h2>
+
+<p>Find every matching pair!</p>
+
+<div class="memory-grid" id="memoryGrid"></div>
+
+<h3 id="memoryStatus"></h3>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+const grid=document.getElementById("memoryGrid");
+
+cards.forEach(symbol=>{
+
+const card=document.createElement("button");
+
+card.className="memory-card";
+card.textContent=symbol;
+
+card.onclick=()=>{
+
+if(locked || card.classList.contains("open")) return;
+
+card.classList.add("open");
+
+if(!first){
+
+first=card;
+return;
+
+}
+
+if(first.textContent===card.textContent){
+
+matches++;
+first=null;
+
+if(matches===symbols.length){
+document.getElementById("memoryStatus").innerText="🎉 You found them all!";
+}
+
+}else{
+
+locked=true;
+
+setTimeout(()=>{
+
+first.classList.remove("open");
+card.classList.remove("open");
+
+first=null;
+locked=false;
+
+},700);
+
+}
+
+};
+
+grid.appendChild(card);
+
+});
+
+}
+
+
+/* ---------- ORIGINAL TIC TAC TOE ---------- */
+
+function ticTacToe(){
+
+let board=["","","","","","","","",""];
+let gameOver=false;
+
+gameWindow.innerHTML=`
+
+<h2>⭕ Tic-Tac-Toe</h2>
+
+<p>You are ❌</p>
+
+<div class="ttt" id="ttt"></div>
+
+<h3 id="tttStatus">Your turn!</h3>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+const grid=document.getElementById("ttt");
+
+function render(){
+
+grid.innerHTML="";
+
+board.forEach((value,index)=>{
+
+const b=document.createElement("button");
+
+b.textContent=value;
+
+b.onclick=()=>move(index);
+
+grid.appendChild(b);
+
+});
+
+}
+
+function winner(){
+
+const wins=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+
+for(const w of wins){
+
+if(
+board[w[0]] &&
+board[w[0]]===board[w[1]] &&
+board[w[1]]===board[w[2]]
+){
+return board[w[0]];
+}
+
+}
+
+return null;
+}
+
+function move(index){
+
+if(gameOver || board[index]) return;
+
+board[index]="X";
+
+render();
+
+if(winner()){
+
+gameOver=true;
+
+document.getElementById("tttStatus").innerText="🎉 You win!";
+
+return;
+
+}
+
+if(board.every(Boolean)){
+
+gameOver=true;
+
+document.getElementById("tttStatus").innerText="🤝 Draw!";
+
+return;
+
+}
+
+document.getElementById("tttStatus").innerText="🤖 Computer thinking...";
+
+setTimeout(computerMove,400);
+
+}
+
+function computerMove(){
+
+const empty=board
+.map((v,i)=>v?null:i)
+.filter(v=>v!==null);
+
+if(!empty.length) return;
+
+const index=empty[Math.floor(Math.random()*empty.length)];
+
+board[index]="O";
+
+render();
+
+if(winner()){
+
+gameOver=true;
+
+document.getElementById("tttStatus").innerText="🤖 Computer wins!";
+
+return;
+
+}
+
+if(board.every(Boolean)){
+
+gameOver=true;
+
+document.getElementById("tttStatus").innerText="🤝 Draw!";
+
+return;
+
+}
+
+document.getElementById("tttStatus").innerText="Your turn!";
+
+}
+
+render();
+
+}
+
+
+/* ---------- ORIGINAL REACTION ---------- */
+
+function reactionGame(){
+
+gameWindow.innerHTML=`
+
+<h2>⚡ Reaction Rush</h2>
+
+<p>Wait for GREEN. Then click immediately!</p>
+
+<div class="reaction" id="reactionBox">
+WAIT...
+</div>
+
+<h2 id="reactionResult"></h2>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+const box=document.getElementById("reactionBox");
+
+let start=0;
+let ready=false;
+
+setTimeout(()=>{
+
+ready=true;
+start=Date.now();
+
+box.style.background="#45d98b";
+box.textContent="CLICK NOW!";
+
+},Math.random()*3500+1500);
+
+box.onclick=()=>{
+
+if(!ready){
+
+box.textContent="😅 TOO EARLY!";
+return;
+
+}
+
+const result=Date.now()-start;
+
+box.textContent="🎉";
+
+document.getElementById("reactionResult")
+.textContent=`Your time: ${result} ms`;
+
+};
+
+}
+
+
+/* ---------- ORIGINAL NUMBER ---------- */
+
+function numberGame(){
+
+const secret=Math.floor(Math.random()*100)+1;
+
+gameWindow.innerHTML=`
+
+<h2>🔢 Number Hunt</h2>
+
+<p>I'm thinking of a number from 1 to 100.</p>
+
+<input id="numberInput"
+type="number"
+min="1"
+max="100"
+style="
+font-size:25px;
+padding:12px;
+width:150px;
+border-radius:15px;
+border:2px solid #ddd">
+
+<br>
+
+<button class="action" onclick="checkNumber(${secret})">
+GUESS
+</button>
+
+<h3 id="numberResult"></h3>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+}
+
+function checkNumber(secret){
+
+const value=Number(document.getElementById("numberInput").value);
+
+const result=document.getElementById("numberResult");
+
+if(!value){
+result.textContent="Enter a number!";
+return;
+}
+
+if(value===secret){
+result.textContent="🎉 YOU GOT IT!";
+}else if(value<secret){
+result.textContent="⬆️ Too low!";
+}else{
+result.textContent="⬇️ Too high!";
+}
+
+}
+
+
+/* ---------- ORIGINAL DICE ---------- */
+
+function diceGame(){
+
+gameWindow.innerHTML=`
+
+<h2>🎲 Lucky Dice</h2>
+
+<div id="diceFace"
+style="font-size:100px;margin:20px">
+🎲
+</div>
+
+<button class="action" onclick="rollLuckyDice()">
+ROLL!
+</button>
+
+<h2 id="diceResult"></h2>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+}
+
+function rollLuckyDice(){
+
+const number=Math.floor(Math.random()*6)+1;
+
+const faces=["⚀","⚁","⚂","⚃","⚄","⚅"];
+
+document.getElementById("diceFace").textContent=faces[number-1];
+
+document.getElementById("diceResult").textContent=`You rolled ${number}!`;
+
+}
+
+
+/* =========================================================
+   NEW GAME 1 - WHACK A MOLE
+========================================================= */
+
+function moleGame(){
+
+let score=0;
+let time=20;
+
+gameWindow.innerHTML=`
+
+<h2>🐹 Whack-a-Mole!</h2>
+
+<div class="scorebar">
+<div class="stat">⭐ Score: <b id="moleScore">0</b></div>
+<div class="stat">⏱️ Time: <b id="moleTime">20</b></div>
+</div>
+
+<div class="whack-area">
+
+<div class="hole" id="hole0"></div>
+<div class="hole" id="hole1"></div>
+<div class="hole" id="hole2"></div>
+<div class="hole" id="hole3"></div>
+<div class="hole" id="hole4"></div>
+<div class="hole" id="hole5"></div>
+<div class="hole" id="hole6"></div>
+<div class="hole" id="hole7"></div>
+<div class="hole" id="hole8"></div>
+
+</div>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+let running=true;
+
+function mole(){
+
+if(!running)return;
+
+document.querySelectorAll(".mole").forEach(x=>x.remove());
+
+const hole=document.getElementById(
+"hole"+Math.floor(Math.random()*9)
+);
+
+const m=document.createElement("div");
+
+m.className="mole";
+m.textContent="🐹";
+
+m.onclick=()=>{
+
+score++;
+
+document.getElementById("moleScore").textContent=score;
+
+m.remove();
+
+};
+
+hole.appendChild(m);
+
+setTimeout(mole,700);
+
+}
+
+mole();
+
+const timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("moleTime").textContent=time;
+
+if(time<=0){
+
+running=false;
+clearInterval(timer);
+
+document.querySelectorAll(".mole").forEach(x=>x.remove());
+
+showToast("🐹 Game over! You scored "+score+"!");
+
+}
+
+},1000);
+
+}
+
+
+/* =========================================================
+   NEW GAME 2 - BUBBLE POP
+========================================================= */
+
+function bubbleGame(){
+
+let score=0;
+let time=20;
+let running=true;
+
+gameWindow.innerHTML=`
+
+<h2>🫧 Bubble Pop!</h2>
+
+<div class="scorebar">
+<div class="stat">🫧 Popped: <b id="bubbleScore">0</b></div>
+<div class="stat">⏱️ Time: <b id="bubbleTime">20</b></div>
+</div>
+
+<div class="bubble-area" id="bubbleArea"></div>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+const area=document.getElementById("bubbleArea");
+
+function createBubble(){
+
+if(!running)return;
+
+const b=document.createElement("div");
+
+b.className="bubble";
+b.textContent="✨";
+
+b.style.left=Math.random()*90+"%";
+b.style.bottom="-70px";
+
+b.onclick=()=>{
+
+score++;
+
+document.getElementById("bubbleScore").textContent=score;
+
+b.remove();
+
+};
+
+area.appendChild(b);
+
+setTimeout(()=>{
+b.remove();
+},3000);
+
+}
+
+const spawn=setInterval(createBubble,400);
+
+const timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("bubbleTime").textContent=time;
+
+if(time<=0){
+
+running=false;
+
+clearInterval(timer);
+clearInterval(spawn);
+
+showToast("🫧 You popped "+score+" bubbles!");
+
+}
+
+},1000);
+
+}
+
+
+/* =========================================================
+   NEW GAME 3 - FROG JUMP
+========================================================= */
+
+function frogJumpGame(){
+
+let score=0;
+
+gameWindow.innerHTML=`
+
+<h2>🐸 Frog Jump!</h2>
+
+<p>Click the lily pads to help the frog reach the stars!</p>
+
+<div id="frogJumpArea"
+style="
+height:350px;
+max-width:700px;
+margin:20px auto;
+border-radius:30px;
+background:linear-gradient(#8ee7ff,#b9f4a5);
+position:relative;
+overflow:hidden;
+border:4px solid white;
+">
+
+<div id="frogPlayer"
+style="
+position:absolute;
+bottom:25px;
+left:30px;
+font-size:55px;
+transition:.35s">
+🐸
+</div>
+
+<button onclick="jumpFrog(1)"
+style="position:absolute;left:20%;bottom:80px;font-size:45px;background:transparent">
+🪷
+</button>
+
+<button onclick="jumpFrog(2)"
+style="position:absolute;left:42%;bottom:150px;font-size:45px;background:transparent">
+🪷
+</button>
+
+<button onclick="jumpFrog(3)"
+style="position:absolute;left:64%;bottom:90px;font-size:45px;background:transparent">
+🪷
+</button>
+
+<div style="
+position:absolute;
+right:20px;
+top:20px;
+font-size:50px">
+⭐
+</div>
+
+</div>
+
+<h2 id="frogScore">⭐ 0 / 3</h2>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+window.frogPosition=0;
+
+window.jumpFrog=function(n){
+
+if(n!==window.frogPosition+1){
+
+showToast("🐸 Oops! Try the next lily pad!");
+
+return;
+
+}
+
+window.frogPosition=n;
+
+const frog=document.getElementById("frogPlayer");
+
+frog.style.left=(n*22+2)+"%";
+frog.style.bottom=(n%2?80:150)+"px";
+
+score++;
+
+document.getElementById("frogScore").textContent=
+"⭐ "+score+" / 3";
+
+if(score===3){
+
+setTimeout(()=>{
+showToast("🐸🎉 The frog reached the stars!");
+},300);
+
+}
+
+};
+
+}
+
+
+/* =========================================================
+   NEW GAME 4 - SPACE DODGE
+========================================================= */
+
+function spaceGame(){
+
+let score=0;
+let running=true;
+let playerX=50;
+
+gameWindow.innerHTML=`
+
+<h2>🪐 Space Dodge!</h2>
+
+<div class="scorebar">
+<div class="stat">⭐ Score: <b id="spaceScore">0</b></div>
+</div>
+
+<div class="space-area" id="spaceArea">
+
+<div class="player" id="spacePlayer">🚀</div>
+
+</div>
+
+<p>Move with ← → or tap the sides of the screen.</p>
+
+<div class="action-row">
+<button class="action" onclick="moveSpace(-10)">⬅️</button>
+<button class="action" onclick="moveSpace(10)">➡️</button>
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+window.moveSpace=function(amount){
+
+playerX+=amount;
+
+playerX=Math.max(5,Math.min(95,playerX));
+
+document.getElementById("spacePlayer")
+.style.left=playerX+"%";
+
+};
+
+document.addEventListener("keydown",spaceKeys);
+
+function spaceKeys(e){
+
+if(!running)return;
+
+if(e.key==="ArrowLeft") moveSpace(-5);
+if(e.key==="ArrowRight") moveSpace(5);
+
+}
+
+const spawn=setInterval(()=>{
+
+if(!running)return;
+
+const asteroid=document.createElement("div");
+
+asteroid.className="asteroid";
+asteroid.textContent=["☄️","🪨","🌑"][Math.floor(Math.random()*3)];
+
+asteroid.style.left=Math.random()*90+"%";
+asteroid.style.top="-50px";
+
+document.getElementById("spaceArea").appendChild(asteroid);
+
+let top=-50;
+
+const fall=setInterval(()=>{
+
+if(!running){
+
+clearInterval(fall);
+return;
+
+}
+
+top+=4;
+
+asteroid.style.top=top+"px";
+
+const ax=parseFloat(asteroid.style.left);
+
+if(top>320 && Math.abs(ax-playerX)<9){
+
+running=false;
+
+clearInterval(fall);
+clearInterval(spawn);
+
+showToast("💥 BOOM! Your score was "+score+"!");
+
+}
+
+if(top>430){
+
+clearInterval(fall);
+
+asteroid.remove();
+
+score++;
+
+document.getElementById("spaceScore").textContent=score;
+
+}
+
+},30);
+
+},700);
+
+}
+
+
+/* =========================================================
+   NEW GAME 5 - CAKE CATCH
+========================================================= */
+
+function cakeGame(){
+
+let score=0;
+let time=20;
+let running=true;
+
+gameWindow.innerHTML=`
+
+<h2>🧁 Cake Catch!</h2>
+
+<div class="scorebar">
+<div class="stat">🧁 Score: <b id="cakeScore">0</b></div>
+<div class="stat">⏱️ Time: <b id="cakeTime">20</b></div>
+</div>
+
+<div class="cake-area" id="cakeArea"></div>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+const area=document.getElementById("cakeArea");
+
+function drop(){
+
+if(!running)return;
+
+const item=document.createElement("div");
+
+item.className="cake-item";
+item.textContent=["🧁","🍰","🍩","🍪","🍓"][Math.floor(Math.random()*5)];
+
+item.style.left=Math.random()*90+"%";
+item.style.top="-60px";
+
+area.appendChild(item);
+
+let y=-60;
+
+const fall=setInterval(()=>{
+
+y+=4;
+
+item.style.top=y+"px";
+
+if(y>330){
+
+clearInterval(fall);
+item.remove();
+
+}
+
+},30);
+
+item.onclick=()=>{
+
+score++;
+
+document.getElementById("cakeScore").textContent=score;
+
+item.remove();
+
+clearInterval(fall);
+
+};
+
+}
+
+const spawn=setInterval(drop,500);
+
+const timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("cakeTime").textContent=time;
+
+if(time<=0){
+
+running=false;
+
+clearInterval(timer);
+clearInterval(spawn);
+
+showToast("🧁 Delicious! You caught "+score+" treats!");
+
+}
+
+},1000);
+
+}
+
+
+/* =========================================================
+   NEW GAME 6 - QUICK MATH
+========================================================= */
+
+function mathGame(){
+
+let score=0;
+let time=30;
+let answer;
+
+gameWindow.innerHTML=`
+
+<h2>🧠 Quick Math!</h2>
+
+<div class="scorebar">
+<div class="stat">⭐ Score: <b id="mathScore">0</b></div>
+<div class="stat">⏱️ Time: <b id="mathTime">30</b></div>
+</div>
+
+<div class="math-question" id="mathQuestion"></div>
+
+<input id="mathInput"
+type="number"
+placeholder="Answer"
+style="
+font-size:25px;
+padding:12px;
+border-radius:15px;
+border:2px solid #ddd;
+width:180px">
+
+<br>
+
+<button class="action" onclick="checkMath()">
+ANSWER
+</button>
+
+<h3 id="mathResult"></h3>
+
+<div class="action-row">
+<button class="action secondary" onclick="closeGame()">Exit Game</button>
+</div>
+`;
+
+function newQuestion(){
+
+const a=Math.floor(Math.random()*12)+1;
+const b=Math.floor(Math.random()*12)+1;
+
+const ops=["+","-","×"];
+
+const op=ops[Math.floor(Math.random()*ops.length)];
+
+if(op==="+") answer=a+b;
+if(op==="-") answer=a-b;
+if(op==="×") answer=a*b;
+
+document.getElementById("mathQuestion").textContent=
+`${a} ${op} ${b} = ?`;
+
+document.getElementById("mathInput").value="";
+
+}
+
+window.checkMath=function(){
+
+const value=Number(
+document.getElementById("mathInput").value
+);
+
+if(value===answer){
+
+score++;
+
+document.getElementById("mathScore").textContent=score;
+
+document.getElementById("mathResult").textContent="🎉 Correct!";
+
+newQuestion();
+
+}else{
+
+document.getElementById("mathResult").textContent="❌ Try again!";
+
+}
+
+};
+
+newQuestion();
+
+const timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("mathTime").textContent=time;
+
+if(time<=0){
+
+clearInterval(timer);
+
+showToast("🧠 Time's up! You got "+score+" correct!");
+
+}
+
+},1000);
+
+}
+
+
+/* =========================================================
+   RIDDLE SYSTEM
+   LARGE NON-REPEATING POOL
+========================================================= */
+
+const riddles=[
+
+["What has hands but cannot clap?","A clock! ⏰"],
+["What gets wetter the more it dries?","A towel! 🧻"],
+["What has many teeth but cannot bite?","A comb! 💇"],
+["What has one eye but cannot see?","A needle! 🪡"],
+["What can travel around the world while staying in one corner?","A stamp! ✉️"],
+["What has a neck but no head?","A bottle! 🍾"],
+["What is full of holes but still holds water?","A sponge! 🧽"],
+["What has words but never speaks?","A book! 📖"],
+["What goes up but never comes down?","Your age! 🎂"],
+["What has legs but doesn't walk?","A table! 🪑"],
+["What can you catch but not throw?","A cold! 🤧"],
+["What has a thumb and four fingers but isn't alive?","A glove! 🧤"],
+["What can fill a room but takes up no space?","Light! 💡"],
+["What has cities and rivers but no houses or water?","A map! 🗺️"],
+["What has a head and a tail but no body?","A coin! 🪙"],
+["What begins with T, ends with T, and has T inside?","A teapot! 🫖"],
+["What has ears but cannot hear?","A cornfield! 🌽"],
+["What has four wheels and flies?","A garbage truck! 🚛"],
+["What has a ring but no finger?","A telephone! ☎️"],
+["What has a bed but never sleeps?","A river! 🌊"],
+["What has a bark but no bite?","A tree! 🌳"],
+["What has keys but cannot open doors?","A piano! 🎹"],
+["What can run but never walks?","Water! 💧"],
+["What can be cracked, made, told, and played?","A joke! 😂"],
+["What is always in front of you but can't be seen?","The future! 🔮"],
+["What has a face but no eyes?","A clock! ⏰"],
+["What has four legs but cannot walk?","A chair! 🪑"],
+["What has a tongue but cannot taste?","A shoe! 👟"],
+["What has a head but no brain?","A cabbage! 🥬"],
+["What has a spine but no bones?","A book! 📚"],
+["What has a mouth but never eats?","A river! 🌊"],
+["What has a bottom but no top?","A leg! 🦵"],
+["What can fly without wings?","Time! ⏰"],
+["What can be seen once in a minute, twice in a moment, and never in a thousand years?","The letter M! 🔤"],
+["What comes down but never goes up?","Rain! 🌧️"],
+["What has no life but can die?","A battery! 🔋"],
+["What kind of room has no doors or windows?","A mushroom! 🍄"],
+["What has lots of eyes but cannot see?","A potato! 🥔"],
+["What has a tail and a head but no body?","A coin! 🪙"],
+["What can you hold without touching it?","A conversation! 💬"],
+["What has a heart that doesn't beat?","An artichoke! 💚"],
+["What has branches but no leaves?","A bank! 🏦"],
+["What has an eye but cannot see?","A storm! 🌪️"],
+["What has a face and two hands but no arms?","A clock! ⏰"],
+["What can go through glass without breaking it?","Light! 💡"],
+["What has a neck and wears a cap but has no head?","A bottle! 🍼"],
+["What is easy to lift but hard to throw?","A feather! 🪶"],
+["What has no beginning, middle, or end?","A circle! ⭕"],
+["What is black when clean and white when dirty?","A chalkboard! 🧑‍🏫"],
+["What has many stories but cannot tell one?","A library! 📚"],
+["What can you hear but never touch or see?","A sound! 🔊"],
+["What has a lock but no door?","A canal! 🚢"],
+["What can be opened but cannot be closed?","An egg! 🥚"],
+["What has a crown but isn't a king?","A tooth! 🦷"],
+["What has a shell but isn't a turtle?","An egg! 🥚"],
+["What has four fingers and a thumb but no bones?","A glove! 🧤"],
+["What is orange and sounds like a parrot?","A carrot! 🥕"],
+["What can run around a backyard but never move?","A fence! 🏡"],
+["What has a lot of letters but isn't the alphabet?","A mailbox! 📫"],
+["What has a foot but no legs?","A ruler! 📏"],
+["What has a head and a foot but no body?","A bed! 🛏️"],
+["What has an endless supply of letters but cannot read?","A keyboard! ⌨️"],
+["What has a screen but isn't a television?","A phone! 📱"],
+["What gets bigger the more you take away?","A hole! 🕳️"],
+["What disappears as soon as you say its name?","Silence! 🤫"],
+["What has a shadow but no body?","A cloud! ☁️"],
+["What has a thousand needles but cannot sew?","A pine tree! 🌲"],
+["What can be broken without being touched?","A promise! 🤝"],
+["What has a ring but isn't jewelry?","A phone! 📱"],
+["What is always coming but never arrives?","Tomorrow! 📅"],
+["What has a lot of keys but cannot open a single lock?","A keyboard! ⌨️"],
+["What can you make but cannot keep?","A promise! 🤝"],
+["What can you serve but never eat?","A tennis ball! 🎾"],
+["What has a head, a tail, is brown, and has no legs?","A penny! 🪙"],
+["What has a thumb but no fingers?","A mitten! 🧤"],
+["What goes up when rain comes down?","An umbrella! ☂️"],
+["What has no bones but can still stand?","A jellyfish? Actually, it cannot stand! 🪼"],
+["What has a roof but no walls?","A mouth! 👄"],
+["What can be long or short, grown or bought, painted or left bare?","Nails! 💅"],
+["What has a bottom but no legs?","A bottle! 🍾"],
+["What can be measured but has no length, width, or height?","Time! ⏱️"],
+["What has no wings but can fly?","A kite! 🪁"],
+["What is something you can never put in a saucepan?","Its lid! 🍳"],
+["What is lighter than a feather but impossible to hold for long?","Your breath! 😮‍💨"],
+["What has an ear but cannot hear?","A cup! ☕"],
+["What has a bark, leaves, and roots?","A tree! 🌳"],
+["What is made of water but dies in water?","Ice! 🧊"],
+["What can be full without containing anything?","A calendar! 📅"],
+["What has a face but no mouth?","A clock! ⏰"],
+["What has no mouth but can answer you?","An echo! 🗣️"],
+["What can you find at the end of a rainbow?","The letter W! 🌈"],
+["What starts with E, ends with E, but contains one letter?","An envelope! ✉️"],
+["What has a neck, two arms, and no head?","A shirt! 👕"],
+["What can you never eat for breakfast?","Lunch and dinner! 🍽️"],
+["What has wheels and a handle but isn't a car?","A suitcase! 🧳"],
+["What is always running but never gets tired?","A river! 🌊"],
+["What can you see in the middle of March and April but not at the beginning or end?","The letter R! 🔤"],
+["What has a lot of eyes but cannot see?","A potato! 🥔"],
+["What has one foot on each side and one in the middle?","A yardstick! 📏"],
+["What has a bed but never sleeps and a mouth but never eats?","A river! 🌊"],
+["What is tall when young and short when old?","A candle! 🕯️"],
+["What can be heard but not seen and comes after thunder?","An echo! 🔊"],
+["What is as light as a feather but no one can hold it for long?","Breath! 😮‍💨"],
+["What has five toes but isn't a foot?","A glove! 🧤"],
+["What can you keep after giving it to someone?","Your word! 💬"],
+["What has a tongue and can run but cannot talk?","A shoe! 👟"],
+["What has a lot of money but cannot spend it?","A piggy bank! 🐷"],
+["What has no legs but can climb?","Smoke! 💨"],
+["What goes through towns and over hills but never moves?","A road! 🛣️"],
+["What has a head like a cat, feet like a cat, but isn't a cat?","A kitten! 🐱"],
+["What is full of keys but cannot unlock a door?","A piano! 🎹"],
+["What has a hole in the middle but can still hold things?","A ring! 💍"],
+["What can be found once in every year, twice in every week, but never in a day?","The letter E! 🔤"],
+["What has two hands and a face but cannot smile?","A clock! ⏰"],
+["What is always late and never arrives?","Tomorrow! 📅"],
+["What gets shorter as it gets older?","A candle! 🕯️"],
+["What can you give away and still keep?","A smile! 😊"],
+["What can jump higher than a building?","Anything — buildings can't jump! 🏢"],
+["What has a lot of pages but isn't a book?","A calendar! 📅"],
+["What has four legs and a back but cannot sit?","A chair! 🪑"],
+["What has a head but no body, a bed but no sleep, and can run but not walk?","A river! 🌊"],
+["What is always hungry and dies if you feed it water?","Fire! 🔥"],
+["What has no eyes but can cry?","A cloud! ☁️"],
+["What can you catch while running but cannot throw?","Your breath! 🏃"],
+["What has no hands but can knock on a door?","The wind! 💨"],
+["What has a face but no head?","A clock! ⏰"],
+["What is easy to get into but hard to get out of?","Trouble! 😅"],
+["What has a lot of teeth but cannot eat?","A zipper! 🤐"],
+["What has a head and a tail but is not an animal?","A coin! 🪙"],
+["What can you see but never touch?","A rainbow! 🌈"],
+["What has no weight but can sink a ship?","A hole! 🕳️"],
+["What is made of letters but contains no words?","The alphabet! 🔤"],
+["What can be opened with a key but has no lock?","A keyboard! ⌨️"],
+["What has four wheels but cannot drive?","A shopping cart! 🛒"],
+["What has a lot of water but isn't wet?","A map! 🗺️"],
+["What can go up a chimney down but cannot go down a chimney up?","An umbrella! ☂️"],
+["What has a tail but no body and can be found in the sky?","A kite! 🪁"],
+["What has no legs but travels all over the world?","A letter! ✉️"],
+["What has a mouth but cannot eat and a bed but cannot sleep?","A river! 🌊"],
+["What can make you cry without touching you?","An onion! 🧅"],
+["What has a horn but does not honk?","A rhinoceros! 🦏"],
+["What has a golden head and a golden tail but no body?","A coin! 🪙"],
+["What can be heard from far away but cannot be seen?","Thunder! ⛈️"],
+["What has no body but has a voice?","An echo! 🔊"],
+["What is white when dirty and black when clean?","A blackboard! 🖍️"],
+["What has a lot of words but never talks?","A dictionary! 📖"],
+["What has a single eye but cannot see?","A needle! 🪡"],
+["What can travel fast without moving?","Thought! 💭"],
+["What is always beside you but cannot be touched?","Your shadow! 👤"],
+["What has a tail and can fly but isn't a bird?","A kite! 🪁"],
+["What has a bottom and a top but no middle?","A staircase! 🪜"],
+["What can be broken by saying its name?","Silence! 🤫"],
+["What can you hold in your left hand but not your right?","Your right elbow! 💪"],
+["What is black, white, and read all over?","A newspaper! 📰"],
+["What has a face, two hands, and numbers but isn't alive?","A clock! ⏰"],
+["What can run but has no feet?","A nose! 👃"],
+["What can fall but never get hurt?","Rain! 🌧️"],
+["What can rise but never fall?","Your age! 🎂"],
+["What is invisible but makes trees move?","Wind! 💨"],
+["What has a crown but is not royal?","A pineapple! 🍍"],
+["What has many layers but no clothes?","An onion! 🧅"],
+["What can be cracked but isn't a joke?","An egg! 🥚"],
+["What has a handle but no door?","A cup! ☕"],
+["What has a body but no legs and a head but no brain?","A bottle! 🍾"],
+["What has a needle but cannot sew?","A compass! 🧭"],
+["What has a point but no pencil?","A question! ❓"],
+["What has a key but no lock and can play music?","A piano! 🎹"],
+["What has a shell and can walk but isn't an egg?","A snail! 🐌"],
+["What is green and sings?","Elvis Parsley! 🌿😂"],
+["What has a nose but cannot smell?","A teapot! 🫖"],
+["What has a mouth and teeth but cannot eat?","A zipper! 🤐"],
+["What can you hear with your eyes?","Nothing! 👀"],
+["What is always behind you but you cannot see it without turning?","The past! ⏪"],
+["What has many colors but cannot paint?","A rainbow! 🌈"],
+["What can be opened every day but never closed?","Your eyes! 👀"],
+["What has a lot of space but no room?","A keyboard spacebar! ⌨️"],
+["What can be as big as a house but weighs nothing?","A shadow! 👤"],
+["What has a top and bottom but no sides?","A coin! 🪙"],
+["What has no arms but can hug a tree?","A vine! 🌿"],
+["What has a tongue but never talks?","A shoe! 👟"],
+["What has a ring around its neck?","A bottle! 🍾"],
+["What can be seen through a window but cannot enter it?","A view! 🪟"],
+["What has four legs and says nothing?","A table! 🪑"],
+["What is always in a hurry but never moves?","A clock! ⏰"],
+["What can go up and down without moving?","Stairs! 🪜"],
+["What can you lose without knowing where you lost it?","Your temper! 😤"],
+["What can be opened without a key?","Your mouth! 👄"],
+["What is round and has no beginning or end?","A circle! ⭕"],
+["What can be broken, even though you never touch it?","A promise! 🤝"],
+["What is something you can hear but cannot see?","Music! 🎵"],
+["What can you make disappear by saying its name?","Silence! 🤫"],
+["What has no bones but has a backbone?","A book! 📚"],
+["What can move without legs and cry without eyes?","A cloud! ☁️"],
+["What has one wheel and flies?","A flying bicycle! 🚲😂"],
+["What can you find in the middle of nowhere?","The letter H! 🔤"],
+["What has an eye in the center but cannot see?","A hurricane! 🌀"],
+["What is always moving but never leaves its place?","A clock's hands! ⏰"],
+["What has many windows but no house?","A computer! 💻"],
+["What has keys and a space but no rooms?","A keyboard! ⌨️"],
+["What can you hear in the forest but never see?","An echo! 🌲"],
+["What can be full of air but still be empty?","A balloon! 🎈"],
+["What has a lot of water but never gets wet?","A painting of the ocean! 🌊"],
+["What has a head, two hands, and no arms?","A clock! ⏰"],
+["What can be eaten but never swallowed?","A meal in a video game! 🎮"],
+["What can be sharp but cannot cut?","A mind! 🧠"],
+["What can be sweet but isn't candy?","A smile! 😊"],
+["What has a lot of stars but isn't the sky?","A rating! ⭐"],
+["What has a heart but no heartbeat?","A deck of cards! ♥️"],
+["What has four suits but isn't clothing?","A deck of cards! 🃏"],
+["What has kings and queens but no castle?","A deck of cards! 👑"],
+["What can be dealt but never eaten?","Cards! 🃏"],
+["What has a face on both sides but no head?","A coin! 🪙"],
+["What can be counted but never touched?","Numbers! 🔢"],
+["What can be written but never read?","A secret message! 🤫"],
+["What can be heard in silence?","Your thoughts! 💭"],
+["What can be seen in darkness if you turn it on?","A light! 💡"],
+["What can make a room bright without taking up space?","Light! 💡"],
+["What can go around the world while staying in your pocket?","A phone! 📱"],
+["What has no legs but can race?","A river! 🌊"],
+["What has no feet but can kick?","A ball! ⚽"],
+["What has no mouth but can whistle?","The wind! 💨"],
+["What can be caught but never held?","A wave! 🌊"],
+["What can be thrown but never caught?","A tantrum! 😤"],
+["What can be worn but never taken off?","A smile! 😊"],
+["What can be broken but never repaired?","A record! 💿"],
+["What has a lot of buttons but isn't a shirt?","A remote control! 📺"],
+["What has a screen and buttons but isn't a phone?","A calculator! 🧮"],
+["What can be charged but isn't a criminal?","A battery! 🔋"],
+["What can be plugged in but isn't a bathtub?","A computer! 💻"],
+["What has a mouse but isn't an animal?","A computer! 🖱️"],
+["What has a keyboard but cannot type?","A piano! 🎹"],
+["What can be copied but not stolen?","An idea! 💡"],
+["What can be shared but not divided?","A secret! 🤫"],
+["What has a beginning and an end but no middle?","A road! 🛣️"],
+["What has a beginning but no end?","A circle! ⭕"],
+["What can be everywhere but nowhere at once?","Air! 🌬️"],
+["What has no color but can make colors visible?","Light! 🌈"],
+["What is always changing but stays the same thing?","The weather! 🌦️"],
+["What can be frozen but isn't cold?","A computer screen! 🖥️"],
+["What can be hot or cold and still be called a drink?","Tea! ☕"],
+["What can have a head but no brain and a tail but no body?","A coin! 🪙"],
+["What has a cap but no head?","A bottle! 🧴"],
+["What can be opened and closed but has no door?","An umbrella! ☂️"],
+["What has a handle and can hold water?","A bucket! 🪣"],
+["What has a lot of holes and still works?","A net! 🥅"],
+["What can catch fish but cannot swim?","A net! 🐟"],
+["What has a line but cannot draw?","A queue! 🧍"],
+["What has a point but cannot argue?","A pencil! ✏️"],
+["What can be round, square, or triangular but is always useful?","A sign! 🪧"],
+["What has a button but isn't clothing?","An elevator! 🛗"],
+["What goes up when you push a button?","An elevator! 🛗"],
+["What has floors but no ground?","A building! 🏢"],
+["What has rooms but no people?","A house in a game! 🎮"],
+["What can have a window but no glass?","A computer! 💻"],
+["What can have a screen but no eyes?","A phone! 📱"],
+["What has a battery but cannot drive?","A flashlight! 🔦"],
+["What shines at night but isn't the moon?","A star! ⭐"],
+["What has wings but cannot fly?","A penguin! 🐧"],
+["What has feathers but isn't a bird?","A pillow! 🛏️"],
+["What has fur but isn't an animal?","A coat! 🧥"],
+["What has four legs but is not alive?","A table! 🪑"],
+["What has a shell but cannot swim?","A snail! 🐌"],
+["What has a tail but cannot wag it?","A kite! 🪁"],
+["What has a horn but cannot play music?","A rhinoceros! 🦏"],
+["What can swim but never gets wet?","A fish in a picture! 🐟"],
+["What can fly but has no feathers?","A plane! ✈️"],
+["What can travel without moving its feet?","A car! 🚗"],
+["What has a door but no house?","A car! 🚗"],
+["What has wheels but cannot roll by itself?","A toy car! 🚙"],
+["What can be pushed but cannot push back?","A button! 🔘"],
+["What can be pulled but cannot pull you?","A door! 🚪"],
+["What has a handle but isn't a suitcase?","A frying pan! 🍳"],
+["What has a bowl but isn't a swimming pool?","A spoon! 🥄"],
+["What has a plate but isn't a dish?","A license plate! 🚗"],
+["What has a seat but isn't a chair?","A bicycle! 🚲"],
+["What has pedals but isn't a piano?","A bicycle! 🚲"],
+["What has a horn but isn't a unicorn?","A car! 🚗"],
+["What can make a loud noise but has no mouth?","A drum! 🥁"],
+["What has strings but cannot tie a knot?","A guitar! 🎸"],
+["What has keys but makes music instead of opening doors?","A piano! 🎹"],
+["What has a beat but no heart?","A drum! 🥁"],
+["What can sing but isn't alive?","A radio! 📻"],
+["What can talk but has no mouth?","A radio! 📻"],
+["What can answer questions but isn't a person?","A computer! 💻"],
+["What can learn but has no school?","An AI! 🤖"],
+["What can think but has no brain?","A computer! 💻"],
+["What can store information but isn't a library?","A computer! 💾"],
+["What can remember everything but isn't a person?","A computer! 💻"],
+["What has memory but cannot remember?","A computer! 💻"],
+["What can connect people but isn't a bridge?","The internet! 🌐"],
+["What can travel instantly but has no legs?","A message! 💬"],
+["What can be sent without a stamp?","An email! 📧"],
+["What can arrive without traveling?","A notification! 🔔"],
+["What can ring without being a bell?","A phone! 📱"],
+["What can buzz without being a bee?","A phone! 📱"],
+["What can freeze without being cold?","A computer! 🥶💻"],
+["What can crash without being a car?","A computer! 💥💻"],
+["What can have bugs but isn't an insect?","Computer software! 🐛💻"],
+["What can have a mouse but no cheese?","A computer! 🖱️"],
+["What can have windows but no curtains?","A computer! 🪟💻"],
+["What can have tabs but no medicine?","A browser! 🌐"],
+["What can have a homepage but isn't a house?","A website! 🏠🌐"],
+["What can have links but isn't a chain?","A website! 🔗"],
+["What can have cookies but isn't a bakery?","A website! 🍪💻"],
+["What can have a browser but isn't a zoo?","A computer! 🖥️"],
+["What can have a cloud but no rain?","Cloud storage! ☁️"],
+["What can be virtual but still be real fun?","A game! 🎮"],
+["What can be played but isn't music?","A game! 🎮"],
+["What has levels but no stairs?","A video game! 🎮"],
+["What has lives but isn't alive?","A video game character! ❤️🎮"],
+["What has a boss but isn't a workplace?","A video game! 👾"],
+["What has coins but isn't a bank?","A video game! 🪙🎮"],
+["What has power-ups but isn't electricity?","A game! ⚡🎮"],
+["What has a score but isn't a test?","A game! 🏆"],
+["What can be won but never bought?","A game! 🏆"],
+["What can be lost but never found?","A game! 😄"],
+["What can make you happy without costing anything?","A smile! 😊"],
+["What can spread without being touched?","Laughter! 😂"],
+["What gets bigger when people laugh?","Fun! 🎉"],
+["What is contagious but usually makes people happy?","Laughter! 😂"],
+["What can be shared with everyone but becomes more valuable?","Happiness! 💖"],
+["What can brighten someone's day without sunlight?","A compliment! ☀️"],
+["What can be given without losing it?","Kindness! 💕"],
+["What costs nothing but can mean everything?","A smile! 😊"],
+["What is small but can make a huge difference?","A kind word! 💖"],
+["What is invisible but can make you feel warm?","Love! ❤️"],
+["What can be heard but not held and can make you dance?","Music! 🎵"],
+["What can make you smile before you even see it?","A funny message! 😂"],
+["What can turn a bad day around?","A good laugh! 😂"],
+["What can make a room happier without changing the room?","Laughter! 😄"],
+["What is better when shared?","Happiness! 💕"],
+["What grows when you give it away?","Kindness! 🌸"],
+["What gets stronger when practiced?","A skill! 💪"],
+["What gets better when you practice it?","Almost anything! 🎯"],
+["What can be learned but never truly finished?","Knowledge! 🧠"],
+["What grows without being alive?","Knowledge! 📚"],
+["What can travel from one brain to another without moving?","An idea! 💡"],
+["What starts with curiosity and ends with knowledge?","Learning! 🧠"],
+["What can open doors without being a key?","Knowledge! 📚"],
+["What can take you anywhere without moving your feet?","A book! 📖"],
+["What can create worlds without building anything?","Your imagination! ✨"],
+["What can fly without wings and travel without feet?","Your imagination! 💭"],
+["What can be endless without being infinite?","A story! 📖"],
+["What can have thousands of endings?","A story you imagine! ✨"],
+["What can turn a blank page into anything?","Creativity! 🎨"],
+["What can make something from nothing?","Imagination! 🌟"],
+["What is colorful, creative, and completely yours?","Your artwork! 🎨"]
+
+];
+
+let remainingRiddles=[];
+let riddleTotal=0;
+let currentRiddle=null;
+
+function shuffle(array){
+
+return array
+.map(value=>({value,sort:Math.random()}))
+.sort((a,b)=>a.sort-b.sort)
+.map(({value})=>value);
+
+}
+
+function refillRiddles(){
+
+remainingRiddles=shuffle([...riddles]);
+
+riddleTotal=remainingRiddles.length;
+
+}
+
+function nextRiddle(){
+
+if(remainingRiddles.length===0){
+
+refillRiddles();
+
+showToast("🎉 You finished every riddle! A completely new round begins!");
+
+}
+
+currentRiddle=remainingRiddles.pop();
+
+document.getElementById("riddleText")
+.textContent="🤔 "+currentRiddle[0];
+
+document.getElementById("riddleAnswer")
+.textContent=currentRiddle[1];
+
+document.getElementById("riddleAnswer")
+.classList.add("hidden");
+
+document.getElementById("riddleCount")
+.textContent=
+`Riddles remaining in this round: ${remainingRiddles.length}`;
+
+}
+
+function revealRiddle(){
+
+document.getElementById("riddleAnswer")
+.classList.remove("hidden");
+
+}
+
+refillRiddles();
+nextRiddle();
+
+
+/* =========================================================
+   PRANK SYSTEM
+========================================================= */
+
+/*
+The hacked prank is completely visual.
+It does not access the computer.
+*/
+
+/* HACKED - ORIGINAL */
+
+function showFakeLink(){
+
+document.getElementById("fakeLinkScreen")
+.classList.add("active");
+
+}
+
+function closeFakeLink(){
+
+document.getElementById("fakeLinkScreen")
+.classList.remove("active");
+
+}
+
+function startFakeHack(){
+
+document.getElementById("fakeLinkScreen")
+.classList.remove("active");
+
+const hack=document.getElementById("hackScreen");
+
+hack.classList.add("active");
+
+const terminal=document.getElementById("terminal");
+
+terminal.innerHTML="";
+
+const lines=[
+
+"> Connecting to remote server...",
+"> Connection established.",
+"> Bypassing security...",
+"> Scanning system...",
+"> WARNING: suspicious activity detected!",
+"> Checking folders...",
+"> Reading imaginary files...",
+"> Encrypting imaginary cat pictures...",
+"> Uploading absolutely nothing...",
+"> Installing 47 invisible bananas...",
+"> SYSTEM STATUS: VERY DRAMATIC",
+
+];
+
+let index=0;
+
+const interval=setInterval(()=>{
+
+if(index<lines.length){
+
+terminal.innerHTML+=lines[index]+"<br>";
+
+index++;
+
+}else{
+
+clearInterval(interval);
+
+}
+
+},500);
+
+let seconds=10;
+
+const countdown=
+document.getElementById("hackCountdown");
+
+const timer=setInterval(()=>{
+
+seconds--;
+
+countdown.textContent=seconds;
+
+if(seconds<=0){
+
+clearInterval(timer);
+
+hack.classList.remove("active");
+
+showScreen("pranks");
+
+showToast("😂 GOTCHA! It was completely fake!");
+
+}
+
+},1000);
+
+}
+
+
+/* =========================================================
+   NEW PRANKS
+========================================================= */
+
+function fakeUpdate(){
+
+const overlay=document.createElement("div");
+
+overlay.className="fake-update";
+
+overlay.innerHTML=`
+
+<div class="update-box">
+
+<div class="update-circle"></div>
+
+<h1>Installing WonderWorld Update...</h1>
+
+<p style="margin-top:15px;font-size:20px">
+Please do not turn off your computer.
+</p>
+
+<div style="
+height:22px;
+background:#303d52;
+border-radius:20px;
+margin:30px 0;
+overflow:hidden">
+
+<div id="updateBar"
+style="
+height:100%;
+width:0%;
+background:#48bdf8;
+transition:width .2s">
+</div>
+
+</div>
+
+<h2 id="updatePercent">0%</h2>
+
+</div>
+`;
+
+document.body.appendChild(overlay);
+
+let percent=0;
+
+const timer=setInterval(()=>{
+
+percent+=Math.floor(Math.random()*8)+1;
+
+if(percent>=100) percent=100;
+
+document.getElementById("updateBar").style.width=percent+"%";
+
+document.getElementById("updatePercent").textContent=
+percent+"%";
+
+if(percent>=100){
+
+clearInterval(timer);
+
+setTimeout(()=>{
+
+overlay.remove();
+
+showToast("😂 Fake update! Nothing was installed.");
+
+},800);
+
+}
+
+},300);
+
+}
+
+
+function infiniteLoading(){
+
+const overlay=document.createElement("div");
+
+overlay.className="fake-update";
+
+overlay.innerHTML=`
+
+<div class="update-box">
+
+<div class="update-circle"></div>
+
+<h1>Loading...</h1>
+
+<p style="margin-top:20px;font-size:20px">
+Almost there...
+</p>
+
+<h2 style="margin-top:30px;color:#48bdf8">
+99.9%
+</h2>
+
+<p style="margin-top:15px;opacity:.7">
+Still loading...
+</p>
+
+<button class="action"
+style="margin-top:30px"
+onclick="this.parentElement.parentElement.remove();showToast('😂 You escaped the loading screen!')">
+ESCAPE
+</button>
+
+</div>
+`;
+
+document.body.appendChild(overlay);
+
+}
+
+
+function screenGlitch(){
+
+document.body.classList.add("glitch-mode");
+
+showToast("🖥️ SYSTEM GLITCH!");
+
+setTimeout(()=>{
+
+document.body.classList.remove("glitch-mode");
+
+showToast("✨ Glitch fixed!");
+
+},5000);
+
+}
+
+
+function secretScanner(){
+
+const messages=[
+"🔍 Scanning...",
+"🔍 Checking keyboard...",
+"🔍 Checking mouse...",
+"🔍 Checking snacks...",
+"🔍 Checking secret files...",
+"🔍 Checking for aliens...",
+"🔍 Checking for frogs..."
+];
+
+let i=0;
+
+const interval=setInterval(()=>{
+
+showToast(messages[i]);
+
+i++;
+
+if(i>=messages.length){
+
+clearInterval(interval);
+
+setTimeout(()=>{
+showToast("🕵️ Scan complete: 100% FUN DETECTED!");
+},800);
+
+}
+
+},700);
+
+}
+
+
+function magicCursor(){
+
+document.body.classList.add("cursor-prank");
+
+showToast("🖱️ WHERE DID YOUR CURSOR GO?!");
+
+setTimeout(()=>{
+
+document.body.classList.remove("cursor-prank");
+
+showToast("🖱️ Your cursor has returned!");
+
+},5000);
+
+}
+
+
+/* =========================================================
+   PERSISTENT FROG MODE
+========================================================= */
+
+function frogMode(){
+
+document.body.classList.toggle("frog-mode");
+
+if(document.body.classList.contains("frog-mode")){
+
+showToast("🐸 FROG MODE ACTIVATED!");
+
+}else{
+
+showToast("🐸 Frog Mode turned off.");
+
+}
+
+}
+
+
+/* =========================================================
+   PERSISTENT RAINBOW MODE
+========================================================= */
+
+function rainbowMode(){
+
+document.body.classList.toggle("rainbow-mode");
+
+if(document.body.classList.contains("rainbow-mode")){
+
+showToast("🌈 RAINBOW MODE ACTIVATED!");
+
+}else{
+
+showToast("🌈 Rainbow Mode turned off.");
+
+}
+
+}
+
+
+/* SCARY WARNING - KEEP */
+
+function scaryWarning(){
+
+showToast("⚠️ WARNING: TOO MUCH FUN DETECTED!");
+
+}
+
+
+/* CRAZY MODE */
+
+function crazyMode(){
+
+document.body.classList.toggle("crazy-mode");
+
+if(document.body.classList.contains("crazy-mode")){
+
+showToast("🤪 CRAZY MODE ACTIVATED!");
+
+}else{
+
+showToast("🤪 Crazy Mode turned off.");
+
+}
+
+}
+
+
+/* =========================================================
+   CREATIVE CANVAS
+========================================================= */
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let brush="#ff4f81";
+let drawing=false;
+
+function resizeCanvas(){
+
+const rect=canvas.getBoundingClientRect();
+
+const old=canvas.toDataURL();
+
+canvas.width=rect.width;
+canvas.height=rect.height;
+
+if(old){
+
+const image=new Image();
+
+image.onload=()=>{
+ctx.drawImage(image,0,0);
+};
+
+image.src=old;
+
+}
+
+}
+
+resizeCanvas();
+
+window.addEventListener("resize",resizeCanvas);
+
+function setBrush(color){
+
+brush=color;
+
+}
+
+function position(e){
+
+const rect=canvas.getBoundingClientRect();
+
+if(e.touches){
+
+return{
+x:e.touches[0].clientX-rect.left,
+y:e.touches[0].clientY-rect.top
+};
+
+}
+
+return{
+x:e.clientX-rect.left,
+y:e.clientY-rect.top
+};
+
+}
+
+function startDraw(e){
+
+drawing=true;
+
+const p=position(e);
+
+ctx.beginPath();
+ctx.moveTo(p.x,p.y);
+
+}
+
+function draw(e){
+
+if(!drawing)return;
+
+e.preventDefault();
+
+const p=position(e);
+
+ctx.lineWidth=7;
+ctx.lineCap="round";
+ctx.strokeStyle=brush;
+
+ctx.lineTo(p.x,p.y);
+ctx.stroke();
+
+}
+
+function stopDraw(){
+
+drawing=false;
+ctx.closePath();
+
+}
+
+canvas.addEventListener("mousedown",startDraw);
+canvas.addEventListener("mousemove",draw);
+canvas.addEventListener("mouseup",stopDraw);
+canvas.addEventListener("mouseleave",stopDraw);
+
+canvas.addEventListener("touchstart",startDraw);
+canvas.addEventListener("touchmove",draw);
+canvas.addEventListener("touchend",stopDraw);
+
+function clearDrawing(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+}
+
+function randomDrawingChallenge(){
+
+const challenges=[
+"🐱 Draw a cute cat!",
+"🏰 Draw a magical castle!",
+"🚀 Draw a spaceship!",
+"🐉 Draw a friendly dragon!",
+"🍕 Draw the world's biggest pizza!",
+"🌈 Draw a rainbow world!",
+"👽 Draw a funny alien!",
+"🦄 Draw a unicorn!"
+];
+
+showToast(
+"🎯 Challenge: "+
+challenges[Math.floor(Math.random()*challenges.length)]
+);
+
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+let toastTimer;
+
+function showToast(message){
+
+const toast=document.getElementById("toast");
+
+toast.textContent=message;
+
+toast.classList.add("show");
+
+clearTimeout(toastTimer);
+
+toastTimer=setTimeout(()=>{
+
+toast.classList.remove("show");
+
+},3000);
+
+}
+
+</script>
+
+</body>
+</html>
